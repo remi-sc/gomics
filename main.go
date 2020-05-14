@@ -23,7 +23,6 @@ import (
 	"github.com/salviati/gomics/archive"
 	"github.com/salviati/gomics/imgdiff"
 	"log"
-	"net/url"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -92,24 +91,8 @@ func (gui *GUI) Close() {
 
 func (gui *GUI) LoadArchive(uri string) {
 	// TODO(utkan): non-local (http:// or https://) stuff someday?
-
-	u, err := url.Parse(uri)
-	if err != nil {
-		log.Println(err)
-	}
-	path := u.Path
-
-	if strings.TrimSpace(path) == "" {
+	if strings.TrimSpace(uri) == "" {
 		return
-	}
-
-	if filepath.IsAbs(path) == false {
-		wd, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		path = filepath.Join(wd, path)
 	}
 
 	if gui.Loaded() {
@@ -118,25 +101,18 @@ func (gui *GUI) LoadArchive(uri string) {
 
 	gui.State.ImageHash = make(map[int]imgdiff.Hash)
 
-	gui.State.ArchivePath = path
-	gui.State.ArchiveName = filepath.Base(path)
+	gui.State.ArchivePath = uri
+	gui.State.ArchiveName = filepath.Base(uri)
 
-	if gui.State.Archive, err = archive.NewArchive(path); err != nil {
-		gui.ShowError("Failed to open " + path + ": " + err.Error())
+	var err error = nil
+	gui.State.Archive, err = archive.NewArchive(uri);
+	if err != nil {
+		gui.ShowError("Failed to open " + uri + ": " + err.Error())
 		return
 	}
 
 	gui.setPage(0) // FIXME(utkan): this might fail.
 	os.Chdir(gui.State.ArchivePath)
-
-	u.Path = path
-	if u.Scheme == "" {
-		u.Scheme = "file"
-	}
-	ok := gui.RecentManager.AddItem(u.String())
-	if !ok {
-		log.Println("Failed to add", path, "as a recent item")
-	}
 }
 
 func (gui *GUI) SetPage(n int) {
