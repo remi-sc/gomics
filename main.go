@@ -99,15 +99,17 @@ func (gui *GUI) LoadArchive(uri string) {
 		gui.Close()
 	}
 
-	gui.State.ImageHash = make(map[int]imgdiff.Hash)
+	file_scheme := "file://"
+	path := strings.TrimPrefix(uri, file_scheme)
 
-	gui.State.ArchivePath = uri
-	gui.State.ArchiveName = filepath.Base(uri)
+	gui.State.ImageHash = make(map[int]imgdiff.Hash)
+	gui.State.ArchivePath = path
+	gui.State.ArchiveName = filepath.Base(path)
 
 	var err error = nil
-	gui.State.Archive, err = archive.NewArchive(uri);
+	gui.State.Archive, err = archive.NewArchive(path);
 	if err != nil {
-		gui.ShowError("Failed to open " + uri + ": " + err.Error())
+		gui.ShowError("Failed to open " + path + ": " + err.Error())
 		return
 	}
 
